@@ -1531,6 +1531,19 @@ namespace sick_scan_xd
     sopasCmdVec[CMD_SET_NTP_INTERFACE_ETH] = "\x02sWN TSCTCInterface 0\x03";
 
     /*
+     * Overwrite CMD_SET_ACCESS_MODE_3 by customized hash value
+     */
+    std::string client_authorization_pw = "F4724744";
+    rosDeclareParam(nh, "client_authorization_pw", client_authorization_pw);
+    rosGetParam(nh, "client_authorization_pw", client_authorization_pw);
+    if (!client_authorization_pw.empty() && client_authorization_pw != "F4724744")
+    {
+      std::string s_access_mode_3 = std::string("\x02sMN SetAccessMode 3 ") + client_authorization_pw + std::string("\x03\0");
+      sopasCmdVec[CMD_SET_ACCESS_MODE_3] = s_access_mode_3;
+      sopasCmdVec[CMD_SET_ACCESS_MODE_3_SAFETY_SCANNER] = s_access_mode_3;
+    }
+
+    /*
      * Radar specific commands
      */
     sopasCmdVec[CMD_SET_TRANSMIT_RAWTARGETS_ON] = "\x02sWN TransmitTargets 1\x03";  // transmit raw target for radar
@@ -1761,7 +1774,6 @@ namespace sick_scan_xd
     // ML: Add here more useful cmd and mask entries
 
     // After definition of command, we specify the command sequence for scanner initalisation
-
     if (parser_->getCurrentParamPtr()->getUseSafetyPasWD())
     {
       sopasCmdChain.push_back(CMD_SET_ACCESS_MODE_3_SAFETY_SCANNER);
