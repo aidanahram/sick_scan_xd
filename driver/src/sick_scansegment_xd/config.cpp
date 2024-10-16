@@ -336,7 +336,7 @@ bool sick_scansegment_xd::Config::Init(rosNodePtr _node)
     ROS_DECL_GET_PARAMETER(node, "add_transform_xyz_rpy", str_add_transform_xyz_rpy);
     bool add_transform_check_dynamic_updates = false;
     ROS_DECL_GET_PARAMETER(node, "add_transform_check_dynamic_updates", add_transform_check_dynamic_updates);
-    add_transform_xyz_rpy = sick_scan_xd::SickCloudTransform(node, str_add_transform_xyz_rpy, false, add_transform_check_dynamic_updates);
+    add_transform_xyz_rpy = sick_scan_xd::SickCloudTransform(node, str_add_transform_xyz_rpy, true, add_transform_check_dynamic_updates);
 
     // Configuration of laserscan messages (ROS only), activate/deactivate laserscan messages for each layer
     std::string str_laserscan_layer_filter = "0 0 0 0 0 1 0 0 0 0 0 0 0 0 0 0";
