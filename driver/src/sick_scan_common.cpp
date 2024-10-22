@@ -1655,21 +1655,22 @@ namespace sick_scan_xd
     sopasCmdMaskVec[CMD_APPLICATION_MODE] = "\x02sWN SetActiveApplications 1 %s %d\x03";
     sopasCmdMaskVec[CMD_SET_OUTPUT_RANGES] = "\x02sWN LMPoutputRange 1 %X %X %X\x03";
     sopasCmdMaskVec[CMD_SET_OUTPUT_RANGES_NAV3] = "\x02sWN LMPoutputRange 1 %X %X %X %X %X %X %X %X %X %X %X %X\x03";
-    sopasCmdMaskVec[CMD_SET_PARTIAL_SCANDATA_CFG] = "\x02sWN LMDscandatacfg %02d 00 %d %d 0 0 %02d 0 0 0 %d 1\x03"; // outputChannelFlagId, rssiFlag, rssiResolutionIs16Bit, EncoderSettings, timingflag
+    sopasCmdMaskVec[CMD_SET_PARTIAL_SCANDATA_CFG] = "\x02sWN LMDscandatacfg %d 0 %d %d 0 %d 0 0 0 0 %d 1\x03"; // outputChannelFlagId, rssiFlag, rssiResolutionIs16Bit, EncoderSettings, timingflag // "\x02sWN LMDscandatacfg %02d 00 %d %d 0 0 %02d 0 0 0 %d 1\x03"
     /*
-   configuration
- * in ASCII
- * sWN LMDscandatacfg  %02d 00 %d   %d  0    %02d    0  0    0  1  1
+    * configuration in ASCII
+    * sWN LMDscandatacfg  %d 0 %d   %d   0  %d  0  0  0  0 %d  1
+    *                      |    |    |   |   |  |  |  |  |  |  |
  *                      |      |    |   |     |      |  |    |  |  | +----------> Output rate       -> All scans: 1--> every 1 scan
- *                      |      |    |   |     |      |  |    |  +----------------> Time             ->True (unused in Data Processing, TiM240:false)
- *                      |      |    |   |     |      |  |    +-------------------> Comment          ->False
- *                      |      |    |   |     |      |  +------------------------> Device Name      ->False
- *                      |      |    |   |     |      +---------------------------> Position         ->False
- *                      |      |    |   |     +----------------------------------> Encoder          ->Param set by Mask
- *                      |      |    |   +----------------------------------------> Unit of Remission->Always 0
- *                      |      |    +--------------------------------------------> RSSi Resolution  ->0 8Bit 1 16 Bit
- *                      |      +-------------------------------------------------> Remission data   ->Param set by Mask 0 False 1 True
- *                      +--------------------------------------------------------> Data channel     ->Param set by Mask
+    *                      |    |    |   |   |  |  |  |  |  +-------------> Time             -> True (unused in Data Processing, TiM240:false)
+    *                      |    |    |   |   |  |  |  |  +----------------> Comment          -> False
+    *                      |    |    |   |   |  |  |  +-------------------> Device Name      -> False
+    *                      |    |    |   |   |  |  +----------------------> Position         -> False
+    *                      |    |    |   |   |  +-------------------------> Encoder MSB       -> Always 0
+    *                      |    |    |   |   +----------------------------> Encoder LSB       -> Param set by Mask (0 = no encoder, 1 = activate encoder), default: 0
+    *                      |    |    |   +--------------------------------> Unit of Remission -> Always 0
+    *                      |    |    +------------------------------------> RSSi Resolution   -> 0 8Bit 1 16 Bit
+    *                      |    +-----------------------------------------> Remission data    -> Param set by Mask 0 False 1 True
+    *                      +----------------------------------------------> Data channel      -> Param set by Mask
 */
     sopasCmdMaskVec[CMD_GET_PARTIAL_SCANDATA_CFG] = "\x02sRA LMPscancfg %02d 00 %d %d 0 0 %02d 0 0 0 1 1\x03";
     sopasCmdMaskVec[CMD_GET_SAFTY_FIELD_CFG] = "\x02sRN field%03d\x03";
@@ -3317,11 +3318,11 @@ namespace sick_scan_xd
           //normal scanconfig handling
           char requestLMDscandatacfg[MAX_STR_LEN];
           // Uses sprintf-Mask to set bitencoded echos and rssi enable flag
-          // sopasCmdMaskVec[CMD_SET_PARTIAL_SCANDATA_CFG] = "\x02sWN LMDscandatacfg %02d 00 %d %d 00 %d 00 0 0 0 1 %d\x03"; // outputChannelFlagId, rssiFlag, rssiResolutionIs16Bit, EncoderSettings, timingflag
+          // sopasCmdMaskVec[CMD_SET_PARTIAL_SCANDATA_CFG] = "\x02sWN LMDscandatacfg %d 0 %d %d 0 %d 0 0 0 0 %d 1\x03"; // outputChannelFlagId, rssiFlag, rssiResolutionIs16Bit, EncoderSettings, timingflag
           const char *pcCmdMask = sopasCmdMaskVec[CMD_SET_PARTIAL_SCANDATA_CFG].c_str();
             sprintf(requestLMDscandatacfg, pcCmdMask, outputChannelFlagId, rssi_flag,
                   rssiResolutionIs16Bit ? 1 : 0,
-                  EncoderSettings != -1 ? EncoderSettings : 0,
+                  EncoderSettings > 0 ? 1 : 0,
                   scandatacfg_timingflag);
           if (useBinaryCmd)
           {
@@ -5477,7 +5478,7 @@ namespace sick_scan_xd
       int scanDataStatus = 0;
       int keyWord3Len = keyWord3.length();
       int dummyArr[12] = {0};
-      //sWN LMDscandatacfg %02d 00 %d %d 0 0 %02d 0 0 0 1 1\x03"
+      // sWN LMDscandatacfg %d 0 %d %d 0 %d 0 0 0 0 %d 1
       int sscanfresult = sscanf(requestAscii + keyWord3Len + 1, " %d %d %d %d %d %d %d %d %d %d %d %d",
                                 &dummyArr[0], // Data Channel Idx LSB
                                 &dummyArr[1], // Data Channel Idx MSB
